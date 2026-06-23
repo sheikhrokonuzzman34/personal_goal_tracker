@@ -1,0 +1,106 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        <p class="text-muted mb-0">Today: {{ today }}</p>
+    </div>
+    <a href="{% url 'daily_submit' %}" class="btn btn-dark">Submit Today</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <p class="text-muted mb-1">Weekly Overall</p>
+                <h3>{{ weekly_report.overall_percent }}%</h3>
+                <div class="progress"><div class="progress-bar" style="width: {{ weekly_report.overall_percent }}%"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <p class="text-muted mb-1">Prayer</p>
+                <h3>{{ weekly_report.prayer_percent }}%</h3>
+                <small>{{ weekly_report.completed_prayers }}/{{ weekly_report.expected_prayers }} prayers</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <p class="text-muted mb-1">Study</p>
+                <h3>{{ weekly_report.study_minutes }} min</h3>
+                <small>{{ weekly_report.study_days }} days studied</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <p class="text-muted mb-1">Skill</p>
+                <h3>{{ weekly_report.skill_minutes }} min</h3>
+                <small>{{ weekly_report.skill_days }} days practiced</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Today's Status</h5>
+                {% if today_entry %}
+                    <p>Productivity score: <strong>{{ today_entry.productivity_score }}%</strong></p>
+                    <p>Prayer score: <strong>{{ today_entry.prayer_score }}%</strong></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead><tr><th>Prayer</th><th>Status</th><th>Sunnah</th></tr></thead>
+                            <tbody>
+                            {% for prayer in today_entry.prayers.all %}
+                                <tr>
+                                    <td>{{ prayer.get_prayer_display }}</td>
+                                    <td><span class="badge text-bg-secondary">{{ prayer.get_status_display }}</span></td>
+                                    <td>{% if prayer.sunnah_done %}Yes{% else %}No{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-box">
+                        <p class="mb-2">You have not submitted today's task yet.</p>
+                        <a href="{% url 'daily_submit' %}" class="btn btn-sm btn-dark">Submit Now</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Active Goals</h5>
+                    <a href="{% url 'goal_create' %}" class="btn btn-sm btn-outline-dark">Add</a>
+                </div>
+                {% if active_goals %}
+                    <div class="list-group list-group-flush">
+                        {% for goal in active_goals %}
+                            <a class="list-group-item list-group-item-action" href="{% url 'goal_update' goal.pk %}">
+                                <div class="fw-semibold">{{ goal.title }}</div>
+                                <small class="text-muted">{{ goal.get_goal_type_display }} | {{ goal.start_date }} to {{ goal.end_date }}</small>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No active goals yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Daily Submit{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Daily Task Submit</h2>
+        <p class="text-muted mb-0">Date: {{ today }}</p>
+    </div>
+</div>
+
+<form method="post" class="pb-5">
+    {% csrf_token %}
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">5 Waqt Namaz</h5>
+            <p class="text-muted small">Just select Jamaat / Single / Missed and tick Sunnah if done.</p>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Prayer</th>
+                        <th>Status</th>
+                        <th>Sunnah</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="fw-semibold">Fajr</td>
+                        <td>{{ form.fajr_status }}</td>
+                        <td>{{ form.fajr_sunnah }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Dhuhr</td>
+                        <td>{{ form.dhuhr_status }}</td>
+                        <td>{{ form.dhuhr_sunnah }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Asr</td>
+                        <td>{{ form.asr_status }}</td>
+                        <td>{{ form.asr_sunnah }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Maghrib</td>
+                        <td>{{ form.maghrib_status }}</td>
+                        <td>{{ form.maghrib_sunnah }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Isha</td>
+                        <td>{{ form.isha_status }}</td>
+                        <td>{{ form.isha_sunnah }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">University Study</h5>
+                    <div class="form-check mb-3">
+                        {{ form.study_done }}
+                        <label class="form-check-label" for="{{ form.study_done.id_for_label }}">Study done today</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        {{ form.study_subject }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Minutes</label>
+                        {{ form.study_minutes }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Short Note</label>
+                        {{ form.study_note }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">New Skill</h5>
+                    <div class="form-check mb-3">
+                        {{ form.skill_done }}
+                        <label class="form-check-label" for="{{ form.skill_done.id_for_label }}">Skill practice done today</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Skill Name</label>
+                        {{ form.skill_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Minutes</label>
+                        {{ form.skill_minutes }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Short Note</label>
+                        {{ form.skill_note }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm my-4">
+        <div class="card-body">
+            <h5 class="mb-3">Other Task</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Task name</label>
+                    {{ form.other_task_title }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Minutes</label>
+                    {{ form.other_task_minutes }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        {{ form.other_task_done }}
+                        <label class="form-check-label" for="{{ form.other_task_done.id_for_label }}">Done</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Daily Note</h5>
+            {{ form.notes }}
+        </div>
+    </div>
+
+    {% if form.errors %}
+        <div class="alert alert-danger">Please fix the errors and submit again.</div>
+    {% endif %}
+
+    <button class="btn btn-dark btn-lg" type="submit">Submit Today's Task</button>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+</form>
+{% endblock %}

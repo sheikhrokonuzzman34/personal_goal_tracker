@@ -1,0 +1,57 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Goals{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">My Goals</h2>
+        <p class="text-muted mb-0">Daily, 7 days, 1 month, 6 months and 1 year goals.</p>
+    </div>
+    <a href="{% url 'goal_create' %}" class="btn btn-dark">Create Goal</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if goals %}
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for goal in goals %}
+                        <tr>
+                            <td class="fw-semibold">{{ goal.title }}</td>
+                            <td>{{ goal.get_category_display }}</td>
+                            <td>{{ goal.get_goal_type_display }}</td>
+                            <td>{{ goal.start_date }}</td>
+                            <td>{{ goal.end_date }}</td>
+                            <td>
+                                {% if goal.is_active %}
+                                    <span class="badge text-bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td><a href="{% url 'goal_update' goal.pk %}" class="btn btn-sm btn-outline-dark">Edit</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-box m-3">
+                <p class="mb-2">No goals found.</p>
+                <a href="{% url 'goal_create' %}" class="btn btn-dark btn-sm">Create your first goal</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

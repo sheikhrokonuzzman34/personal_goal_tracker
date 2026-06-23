@@ -1,0 +1,57 @@
+body {
+    background: #f5f7fb;
+}
+
+.card {
+    border: 0;
+    border-radius: 16px;
+}
+
+.stat-card {
+    min-height: 140px;
+}
+
+.empty-box {
+    background: #f8f9fa;
+    border: 1px dashed #cbd3da;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 999px;
+}
+
+.progress-bar {
+    background: #212529;
+}
+
+form ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+form ul li label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+
+.helptext {
+    display: block;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.errorlist {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 6px;
+}
