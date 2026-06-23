@@ -1,26 +1,44 @@
-# Personal Goal Tracker
+# Personal Goal Tracker — Dynamic Version
 
-A simple Django + Bootstrap web app for personal goals and daily task tracking.
+A Django + Bootstrap web app for personal goal and daily task tracking.
+
+## Correct Requirement Covered
+
+Only **5 Waqt Namaz** is default/fixed.
+
+Everything else is dynamic:
+
+- User can create categories dynamically.
+  - Example: University Study, New Skill, Health, Business, Reading.
+- User can create goals dynamically under categories.
+  - Goal duration: 24 hours, 7 days, 1 month, 6 months, 1 year.
+- Daily submit page automatically shows only active goals created by the user.
+- Reports calculate prayer progress and dynamic goal progress.
 
 ## Features
 
 - Register / Login / Logout
-- Create goals for:
-  - 24 hours / daily
+- Default 5 Waqt Namaz tracking:
+  - Jamaat
+  - Single
+  - Missed
+  - Sunnah done / not done
+- Dynamic category create/edit
+- Dynamic goal create/edit
+- Daily submit with:
+  - Namaz status
+  - Active dynamic goals
+  - Done checkbox
+  - Minutes
+  - Short note
+- Reports for:
+  - Daily
   - 7 days
   - 1 month
   - 6 months
   - 1 year
-- Daily task submit page
-- 5 waqt namaz tracking:
-  - Jamaat
-  - Single
-  - Missed
-  - Sunnah done/not done
-- University study tracking
-- New skill practice tracking
-- Other task tracking
-- Daily, weekly, monthly, 6-month and yearly reports
+- Category-wise report
+- Overall progress percentage
 
 ## Tech Stack
 
@@ -67,21 +85,23 @@ http://127.0.0.1:8000/
 
 ## Main Pages
 
-- `/register/` - Create user account
-- `/accounts/login/` - Login
-- `/` - Dashboard
-- `/daily-submit/` - Submit today's tasks
-- `/goals/` - Goal list
-- `/goals/create/` - Create goal
-- `/reports/` - Reports
+- `/register/` — Create user account
+- `/accounts/login/` — Login
+- `/` — Dashboard
+- `/categories/` — Category list
+- `/categories/create/` — Create category
+- `/goals/` — Goal list
+- `/goals/create/` — Create goal
+- `/daily-submit/` — Submit today's prayer and dynamic goals
+- `/reports/` — Reports
 
-## Notes
+## Flow
 
-This is an MVP. Later you can add:
-
-- Charts
-- Calendar view
-- Reminder system
-- Streak count
-- API version
-- Mobile app
+1. Register or login.
+2. Create a category.
+   - Example: University Study.
+3. Create a goal under that category.
+   - Example: Study Django 15 minutes daily for 1 month.
+4. Go to Daily Submit.
+5. Fill namaz status and tick your dynamic goals.
+6. Check Dashboard and Reports.

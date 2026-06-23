@@ -1,8 +1,30 @@
 from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+
+
+class Category(models.Model):
+    """User-created dynamic category. Example: University Study, New Skill, Health."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='categories')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('user', 'name')
+        verbose_name_plural = 'categories'
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('category_list')
 
 
 class Goal(models.Model):
@@ -20,17 +42,9 @@ class Goal(models.Model):
         (YEARLY, '1 Year'),
     ]
 
-    CATEGORY_CHOICES = [
-        ('prayer', 'Prayer'),
-        ('study', 'University Study'),
-        ('skill', 'New Skill'),
-        ('health', 'Health'),
-        ('other', 'Other'),
-    ]
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='goals')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='goals')
     title = models.CharField(max_length=150)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     goal_type = models.CharField(max_length=20, choices=GOAL_TYPE_CHOICES)
     description = models.TextField(blank=True)
     start_date = models.DateField(default=timezone.localdate)
@@ -77,36 +91,22 @@ class DailyEntry(models.Model):
 
     @property
     def prayer_score(self):
-        prayers = self.prayers.all()
-        if not prayers:
-            return 0
-        completed = prayers.exclude(status=PrayerLog.MISSED).count()
+        completed = self.prayers.exclude(status=PrayerLog.MISSED).count()
         return round((completed / 5) * 100)
 
     @property
     def productivity_score(self):
-        points = 0
-        total = 0
+        prayer_total = 5
+        prayer_done = self.prayers.exclude(status=PrayerLog.MISSED).count()
 
-        total += 5
-        points += self.prayers.exclude(status=PrayerLog.MISSED).count()
+        goal_total = self.goal_progress.count()
+        goal_done = self.goal_progress.filter(done=True).count()
 
-        total += 1
-        if hasattr(self, 'study_log') and self.study_log.done:
-            points += 1
-
-        total += 1
-        if hasattr(self, 'skill_log') and self.skill_log.done:
-            points += 1
-
-        other_total = self.other_tasks.count()
-        if other_total:
-            total += other_total
-            points += self.other_tasks.filter(done=True).count()
-
+        total = prayer_total + goal_total
+        done = prayer_done + goal_done
         if total == 0:
             return 0
-        return round((points / total) * 100)
+        return round((done / total) * 100)
 
 
 class PrayerLog(models.Model):
@@ -147,33 +147,18 @@ class PrayerLog(models.Model):
         return f'{self.get_prayer_display()} - {self.get_status_display()}'
 
 
-class StudyLog(models.Model):
-    daily_entry = models.OneToOneField(DailyEntry, on_delete=models.CASCADE, related_name='study_log')
+class GoalProgress(models.Model):
+    """Daily submit data for each dynamic goal."""
+
+    daily_entry = models.ForeignKey(DailyEntry, on_delete=models.CASCADE, related_name='goal_progress')
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name='progress_logs')
     done = models.BooleanField(default=False)
-    subject = models.CharField(max_length=150, blank=True)
     minutes = models.PositiveIntegerField(default=0)
     note = models.TextField(blank=True)
 
-    def __str__(self):
-        return f'Study - {self.daily_entry.date}'
-
-
-class SkillLog(models.Model):
-    daily_entry = models.OneToOneField(DailyEntry, on_delete=models.CASCADE, related_name='skill_log')
-    done = models.BooleanField(default=False)
-    skill_name = models.CharField(max_length=150, blank=True)
-    minutes = models.PositiveIntegerField(default=0)
-    note = models.TextField(blank=True)
+    class Meta:
+        unique_together = ('daily_entry', 'goal')
+        ordering = ['goal__category__name', 'goal__title']
 
     def __str__(self):
-        return f'Skill - {self.daily_entry.date}'
-
-
-class OtherTask(models.Model):
-    daily_entry = models.ForeignKey(DailyEntry, on_delete=models.CASCADE, related_name='other_tasks')
-    title = models.CharField(max_length=150)
-    done = models.BooleanField(default=False)
-    minutes = models.PositiveIntegerField(default=0)
-
-    def __str__(self):
-        return self.title
+        return f'{self.goal.title} - {self.daily_entry.date}'

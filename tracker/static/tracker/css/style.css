@@ -19,6 +19,10 @@ body {
     text-align: center;
 }
 
+.dynamic-task-card {
+    background: #ffffff;
+}
+
 .progress {
     height: 8px;
     border-radius: 999px;

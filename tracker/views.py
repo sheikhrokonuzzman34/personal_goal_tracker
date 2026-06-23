@@ -1,16 +1,17 @@
 from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q, Sum
-from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Sum
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, ListView, UpdateView
 
-from .forms import DailySubmitForm, GoalForm, RegisterForm
-from .models import DailyEntry, Goal, OtherTask, PrayerLog, SkillLog, StudyLog
+from .forms import CategoryForm, GoalForm, PrayerSubmitForm, RegisterForm
+from .models import Category, DailyEntry, Goal, GoalProgress, PrayerLog
 
 
 PRAYER_FIELDS = [
@@ -54,61 +55,95 @@ def date_range_for_period(period):
     return today - timedelta(days=6), today
 
 
+def overlap_days(goal, start_date, end_date):
+    start = max(goal.start_date, start_date)
+    end = min(goal.end_date, end_date)
+    if start > end:
+        return 0
+    return (end - start).days + 1
+
+
+def active_goals_for_date(user, date):
+    return Goal.objects.filter(
+        user=user,
+        is_active=True,
+        start_date__lte=date,
+        end_date__gte=date,
+        category__is_active=True,
+    ).select_related('category').order_by('category__name', 'title')
+
+
 def build_report(user, start_date, end_date):
-    entries = DailyEntry.objects.filter(user=user, date__range=[start_date, end_date]).prefetch_related('prayers', 'other_tasks')
+    entries = DailyEntry.objects.filter(user=user, date__range=[start_date, end_date]).prefetch_related(
+        'prayers', 'goal_progress__goal__category'
+    )
     total_days = (end_date - start_date).days + 1
-    entry_count = entries.count()
 
     prayer_qs = PrayerLog.objects.filter(daily_entry__user=user, daily_entry__date__range=[start_date, end_date])
-    total_prayers = prayer_qs.count()
     completed_prayers = prayer_qs.exclude(status=PrayerLog.MISSED).count()
     jamaat_count = prayer_qs.filter(status=PrayerLog.JAMAAT).count()
     single_count = prayer_qs.filter(status=PrayerLog.SINGLE).count()
     missed_count = prayer_qs.filter(status=PrayerLog.MISSED).count()
     sunnah_count = prayer_qs.filter(sunnah_done=True).count()
 
-    study_qs = StudyLog.objects.filter(daily_entry__user=user, daily_entry__date__range=[start_date, end_date])
-    skill_qs = SkillLog.objects.filter(daily_entry__user=user, daily_entry__date__range=[start_date, end_date])
-
-    study_days = study_qs.filter(done=True).count()
-    skill_days = skill_qs.filter(done=True).count()
-    study_minutes = study_qs.aggregate(total=Sum('minutes'))['total'] or 0
-    skill_minutes = skill_qs.aggregate(total=Sum('minutes'))['total'] or 0
-
-    other_qs = OtherTask.objects.filter(daily_entry__user=user, daily_entry__date__range=[start_date, end_date])
-    other_total = other_qs.count()
-    other_done = other_qs.filter(done=True).count()
-
     expected_prayers = total_days * 5
     prayer_percent = round((completed_prayers / expected_prayers) * 100) if expected_prayers else 0
-    study_percent = round((study_days / total_days) * 100) if total_days else 0
-    skill_percent = round((skill_days / total_days) * 100) if total_days else 0
-    other_percent = round((other_done / other_total) * 100) if other_total else 0
 
-    overall_parts = [prayer_percent, study_percent, skill_percent]
-    if other_total:
-        overall_parts.append(other_percent)
-    overall_percent = round(sum(overall_parts) / len(overall_parts)) if overall_parts else 0
+    goals = Goal.objects.filter(
+        user=user,
+        start_date__lte=end_date,
+        end_date__gte=start_date,
+        category__is_active=True,
+    ).select_related('category')
+
+    expected_goal_tasks = sum(overlap_days(goal, start_date, end_date) for goal in goals)
+    progress_qs = GoalProgress.objects.filter(
+        daily_entry__user=user,
+        daily_entry__date__range=[start_date, end_date],
+        goal__in=goals,
+    ).select_related('goal__category')
+    completed_goal_tasks = progress_qs.filter(done=True).count()
+    goal_minutes = progress_qs.aggregate(total=Sum('minutes'))['total'] or 0
+    goal_percent = round((completed_goal_tasks / expected_goal_tasks) * 100) if expected_goal_tasks else 0
+
+    category_reports = []
+    categories = Category.objects.filter(user=user, is_active=True).order_by('name')
+    for category in categories:
+        cat_goals = [goal for goal in goals if goal.category_id == category.id]
+        cat_expected = sum(overlap_days(goal, start_date, end_date) for goal in cat_goals)
+        if not cat_expected:
+            continue
+        cat_progress = progress_qs.filter(goal__category=category)
+        cat_done = cat_progress.filter(done=True).count()
+        cat_minutes = cat_progress.aggregate(total=Sum('minutes'))['total'] or 0
+        category_reports.append({
+            'category': category,
+            'expected': cat_expected,
+            'done': cat_done,
+            'minutes': cat_minutes,
+            'percent': round((cat_done / cat_expected) * 100) if cat_expected else 0,
+        })
+
+    if expected_goal_tasks:
+        overall_percent = round((prayer_percent + goal_percent) / 2)
+    else:
+        overall_percent = prayer_percent
 
     return {
         'total_days': total_days,
-        'entry_count': entry_count,
+        'entry_count': entries.count(),
         'completed_prayers': completed_prayers,
         'expected_prayers': expected_prayers,
         'jamaat_count': jamaat_count,
         'single_count': single_count,
         'missed_count': missed_count,
         'sunnah_count': sunnah_count,
-        'study_days': study_days,
-        'skill_days': skill_days,
-        'study_minutes': study_minutes,
-        'skill_minutes': skill_minutes,
-        'other_total': other_total,
-        'other_done': other_done,
         'prayer_percent': prayer_percent,
-        'study_percent': study_percent,
-        'skill_percent': skill_percent,
-        'other_percent': other_percent,
+        'expected_goal_tasks': expected_goal_tasks,
+        'completed_goal_tasks': completed_goal_tasks,
+        'goal_minutes': goal_minutes,
+        'goal_percent': goal_percent,
+        'category_reports': category_reports,
         'overall_percent': overall_percent,
         'entries': entries[:10],
     }
@@ -117,10 +152,12 @@ def build_report(user, start_date, end_date):
 @login_required
 def dashboard(request):
     today = timezone.localdate()
-    today_entry = DailyEntry.objects.filter(user=request.user, date=today).prefetch_related('prayers').first()
+    today_entry = DailyEntry.objects.filter(user=request.user, date=today).prefetch_related(
+        'prayers', 'goal_progress__goal__category'
+    ).first()
     week_start, week_end = date_range_for_period('weekly')
     weekly_report = build_report(request.user, week_start, week_end)
-    active_goals = Goal.objects.filter(user=request.user, is_active=True)[:5]
+    active_goals = active_goals_for_date(request.user, today)[:6]
 
     return render(request, 'tracker/dashboard.html', {
         'today': today,
@@ -134,45 +171,21 @@ def dashboard(request):
 def daily_submit(request):
     today = timezone.localdate()
     entry = DailyEntry.objects.filter(user=request.user, date=today).first()
+    active_goals = list(active_goals_for_date(request.user, today))
 
-    initial = {
-        'notes': entry.notes if entry else '',
-    }
-
+    initial = {'notes': entry.notes if entry else ''}
     if entry:
         prayers = {p.prayer: p for p in entry.prayers.all()}
         for prefix, prayer_key in PRAYER_FIELDS:
             prayer_log = prayers.get(prayer_key)
             initial[f'{prefix}_status'] = prayer_log.status if prayer_log else PrayerLog.MISSED
             initial[f'{prefix}_sunnah'] = prayer_log.sunnah_done if prayer_log else False
-
-        if hasattr(entry, 'study_log'):
-            initial.update({
-                'study_done': entry.study_log.done,
-                'study_subject': entry.study_log.subject,
-                'study_minutes': entry.study_log.minutes,
-                'study_note': entry.study_log.note,
-            })
-        if hasattr(entry, 'skill_log'):
-            initial.update({
-                'skill_done': entry.skill_log.done,
-                'skill_name': entry.skill_log.skill_name,
-                'skill_minutes': entry.skill_log.minutes,
-                'skill_note': entry.skill_log.note,
-            })
-        other_task = entry.other_tasks.first()
-        if other_task:
-            initial.update({
-                'other_task_title': other_task.title,
-                'other_task_done': other_task.done,
-                'other_task_minutes': other_task.minutes,
-            })
     else:
         for prefix, prayer_key in PRAYER_FIELDS:
             initial[f'{prefix}_status'] = PrayerLog.MISSED
 
     if request.method == 'POST':
-        form = DailySubmitForm(request.POST)
+        form = PrayerSubmitForm(request.POST)
         if form.is_valid():
             entry, _ = DailyEntry.objects.update_or_create(
                 user=request.user,
@@ -190,42 +203,45 @@ def daily_submit(request):
                     }
                 )
 
-            StudyLog.objects.update_or_create(
-                daily_entry=entry,
-                defaults={
-                    'done': form.cleaned_data.get('study_done', False),
-                    'subject': form.cleaned_data.get('study_subject', ''),
-                    'minutes': form.cleaned_data.get('study_minutes') or 0,
-                    'note': form.cleaned_data.get('study_note', ''),
-                }
-            )
+            for goal in active_goals:
+                done = request.POST.get(f'goal_{goal.id}_done') == 'on'
+                minutes_raw = request.POST.get(f'goal_{goal.id}_minutes') or 0
+                try:
+                    minutes = max(0, int(minutes_raw))
+                except ValueError:
+                    minutes = 0
+                note = request.POST.get(f'goal_{goal.id}_note', '').strip()
 
-            SkillLog.objects.update_or_create(
-                daily_entry=entry,
-                defaults={
-                    'done': form.cleaned_data.get('skill_done', False),
-                    'skill_name': form.cleaned_data.get('skill_name', ''),
-                    'minutes': form.cleaned_data.get('skill_minutes') or 0,
-                    'note': form.cleaned_data.get('skill_note', ''),
-                }
-            )
-
-            other_title = form.cleaned_data.get('other_task_title', '').strip()
-            entry.other_tasks.all().delete()
-            if other_title:
-                OtherTask.objects.create(
+                GoalProgress.objects.update_or_create(
                     daily_entry=entry,
-                    title=other_title,
-                    done=form.cleaned_data.get('other_task_done', False),
-                    minutes=form.cleaned_data.get('other_task_minutes') or 0,
+                    goal=goal,
+                    defaults={'done': done, 'minutes': minutes, 'note': note}
                 )
 
             messages.success(request, 'Today\'s task submitted successfully.')
             return redirect('dashboard')
     else:
-        form = DailySubmitForm(initial=initial)
+        form = PrayerSubmitForm(initial=initial)
 
-    return render(request, 'tracker/daily_submit.html', {'form': form, 'today': today})
+    progress_map = {}
+    if entry:
+        progress_map = {p.goal_id: p for p in entry.goal_progress.all()}
+
+    goal_rows = []
+    for goal in active_goals:
+        progress = progress_map.get(goal.id)
+        goal_rows.append({
+            'goal': goal,
+            'done': progress.done if progress else False,
+            'minutes': progress.minutes if progress else goal.target_minutes_per_day,
+            'note': progress.note if progress else '',
+        })
+
+    return render(request, 'tracker/daily_submit.html', {
+        'form': form,
+        'today': today,
+        'goal_rows': goal_rows,
+    })
 
 
 @login_required
@@ -242,13 +258,48 @@ def reports(request):
     })
 
 
+class CategoryListView(LoginRequiredMixin, ListView):
+    model = Category
+    template_name = 'tracker/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
+
+
+class CategoryCreateView(LoginRequiredMixin, CreateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'tracker/category_form.html'
+    success_url = reverse_lazy('category_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        messages.success(self.request, 'Category created successfully.')
+        return super().form_valid(form)
+
+
+class CategoryUpdateView(LoginRequiredMixin, UpdateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'tracker/category_form.html'
+    success_url = reverse_lazy('category_list')
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Category updated successfully.')
+        return super().form_valid(form)
+
+
 class GoalListView(LoginRequiredMixin, ListView):
     model = Goal
     template_name = 'tracker/goal_list.html'
     context_object_name = 'goals'
 
     def get_queryset(self):
-        return Goal.objects.filter(user=self.request.user)
+        return Goal.objects.filter(user=self.request.user).select_related('category')
 
 
 class GoalCreateView(LoginRequiredMixin, CreateView):
@@ -256,6 +307,17 @@ class GoalCreateView(LoginRequiredMixin, CreateView):
     form_class = GoalForm
     template_name = 'tracker/goal_form.html'
     success_url = reverse_lazy('goal_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Category.objects.filter(user=request.user, is_active=True).exists():
+            messages.info(request, 'Please create a category first, then add your goals under that category.')
+            return redirect('category_create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -270,7 +332,12 @@ class GoalUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('goal_list')
 
     def get_queryset(self):
-        return Goal.objects.filter(user=self.request.user)
+        return Goal.objects.filter(user=self.request.user).select_related('category')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         messages.success(self.request, 'Goal updated successfully.')

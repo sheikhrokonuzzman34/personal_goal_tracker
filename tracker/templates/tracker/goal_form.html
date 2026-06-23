@@ -9,17 +9,19 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label">Title</label>
-                            {{ form.title }}
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Category</label>
                             {{ form.category }}
+                            <small class="text-muted">You can create category dynamically.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Goal Type</label>
                             {{ form.goal_type }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Goal Title</label>
+                            {{ form.title }}
+                            <small class="text-muted">Example: Study Django 15 minutes, Practice English 10 minutes.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Start Date</label>
@@ -28,11 +30,12 @@
                         <div class="col-md-6">
                             <label class="form-label">End Date</label>
                             {{ form.end_date }}
-                            <small class="text-muted">Leave empty to auto-calculate.</small>
+                            <small class="text-muted">Leave empty to auto-calculate from goal type.</small>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">Target minutes per day</label>
                             {{ form.target_minutes_per_day }}
+                            <small class="text-muted">Keep it small, so daily submit takes less time.</small>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">Description</label>
