@@ -1,17 +1,43 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Register{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-3">Create Account</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button class="btn btn-dark w-100" type="submit">Register</button>
-                </form>
-                <p class="mt-3 mb-0 small">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+<div class="auth-wrapper">
+    <div class="card auth-card shadow-sm">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="auth-side h-100">
+                    <span class="hero-kicker bg-white bg-opacity-10 text-white">Start today</span>
+                    <h1 class="mt-4 mb-3">Build better habits with small daily wins.</h1>
+                    <p class="mb-4 text-white-50">Create your account and manage your own categories, goals, and daily performance reports.</p>
+                    <div class="auth-feature"><span>✓</span><div>Custom categories and goals</div></div>
+                    <div class="auth-feature"><span>✓</span><div>Daily prayer tracking</div></div>
+                    <div class="auth-feature"><span>✓</span><div>Weekly, monthly, and yearly reports</div></div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card-body p-4 p-md-5">
+                    <div class="mb-4">
+                        <p class="page-eyebrow mb-2">Register</p>
+                        <h2 class="page-title">Create Account</h2>
+                        <p class="page-subtitle">Set up your personal tracker in less than a minute.</p>
+                    </div>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}<small class="helptext">{{ field.help_text|safe }}</small>{% endif %}
+                                {% if field.errors %}<div class="errorlist">{{ field.errors }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger rounded-4">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        <button class="btn btn-dark w-100" type="submit">Register</button>
+                    </form>
+                    <p class="mt-4 mb-0 small text-center text-muted">Already have an account? <a class="fw-bold" href="{% url 'login' %}">Login</a></p>
+                </div>
             </div>
         </div>
     </div>

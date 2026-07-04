@@ -1,11 +1,20 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Goal Form{% endblock %}
 {% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Goal</p>
+        <h1 class="page-title">Save Goal</h1>
+        <p class="page-subtitle">Set a clear target and keep daily submission simple.</p>
+    </div>
+    <a href="{% url 'goal_list' %}" class="btn btn-outline-dark">Back to Goals</a>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-3">Goal</h3>
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-body p-4 p-md-5">
+                <h3 class="card-title-modern">Goal Details</h3>
                 <form method="post">
                     {% csrf_token %}
                     <div class="row g-3">
@@ -44,14 +53,14 @@
                         <div class="col-md-12">
                             <div class="form-check">
                                 {{ form.is_active }}
-                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                                <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">Active</label>
                             </div>
                         </div>
                     </div>
                     {% if form.errors %}
-                        <div class="alert alert-danger mt-3">{{ form.errors }}</div>
+                        <div class="alert alert-danger rounded-4 mt-3">{{ form.errors }}</div>
                     {% endif %}
-                    <div class="mt-4">
+                    <div class="d-flex gap-2 mt-4 form-actions">
                         <button class="btn btn-dark" type="submit">Save Goal</button>
                         <a href="{% url 'goal_list' %}" class="btn btn-outline-secondary">Cancel</a>
                     </div>

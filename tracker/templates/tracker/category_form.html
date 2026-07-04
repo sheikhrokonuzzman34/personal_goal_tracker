@@ -1,11 +1,20 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Category Form{% endblock %}
 {% block content %}
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Category</p>
+        <h1 class="page-title">Save Category</h1>
+        <p class="page-subtitle">Organize your goals into meaningful groups.</p>
+    </div>
+    <a href="{% url 'category_list' %}" class="btn btn-outline-dark">Back to Categories</a>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-3">Category</h3>
+    <div class="col-lg-8 col-xl-7">
+        <div class="card">
+            <div class="card-body p-4 p-md-5">
+                <h3 class="card-title-modern">Category Details</h3>
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -19,13 +28,15 @@
                     </div>
                     <div class="form-check mb-3">
                         {{ form.is_active }}
-                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">Active</label>
                     </div>
                     {% if form.errors %}
-                        <div class="alert alert-danger">{{ form.errors }}</div>
+                        <div class="alert alert-danger rounded-4">{{ form.errors }}</div>
                     {% endif %}
-                    <button class="btn btn-dark" type="submit">Save Category</button>
-                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <div class="d-flex gap-2 form-actions">
+                        <button class="btn btn-dark" type="submit">Save Category</button>
+                        <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
                 </form>
             </div>
         </div>

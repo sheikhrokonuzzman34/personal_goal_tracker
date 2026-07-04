@@ -1,17 +1,42 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-3">Login</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button class="btn btn-dark w-100" type="submit">Login</button>
-                </form>
-                <p class="mt-3 mb-0 small">No account? <a href="{% url 'register' %}">Create one</a></p>
+<div class="auth-wrapper">
+    <div class="card auth-card shadow-sm">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="auth-side h-100">
+                    <span class="hero-kicker bg-white bg-opacity-10 text-white">Welcome back</span>
+                    <h1 class="mt-4 mb-3">Track your daily discipline with clarity.</h1>
+                    <p class="mb-4 text-white-50">Submit your daily prayer and goal progress, then review your weekly performance from one clean dashboard.</p>
+                    <div class="auth-feature"><span>✓</span><div>Daily task submission</div></div>
+                    <div class="auth-feature"><span>✓</span><div>Prayer and dynamic goal reports</div></div>
+                    <div class="auth-feature"><span>✓</span><div>Mobile-friendly progress tracking</div></div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card-body p-4 p-md-5">
+                    <div class="mb-4">
+                        <p class="page-eyebrow mb-2">Login</p>
+                        <h2 class="page-title">Continue your progress</h2>
+                        <p class="page-subtitle">Enter your account details to access your tracker.</p>
+                    </div>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}<div class="errorlist">{{ field.errors }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger rounded-4">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        <button class="btn btn-dark w-100" type="submit">Login</button>
+                    </form>
+                    <p class="mt-4 mb-0 small text-center text-muted">No account? <a class="fw-bold" href="{% url 'register' %}">Create one</a></p>
+                </div>
             </div>
         </div>
     </div>

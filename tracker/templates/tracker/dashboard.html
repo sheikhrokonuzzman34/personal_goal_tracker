@@ -1,39 +1,44 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">Dashboard</h2>
-        <p class="text-muted mb-0">Today: {{ today }}</p>
+<div class="hero-card">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-8">
+            <span class="hero-kicker">Today · {{ today }}</span>
+            <h1 class="hero-title">Your daily progress dashboard</h1>
+            <p class="hero-text mb-0">Track prayer, dynamic goals, completed tasks, and category performance from one responsive view.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{% url 'daily_submit' %}" class="btn btn-dark btn-lg">Submit Today</a>
+        </div>
     </div>
-    <a href="{% url 'daily_submit' %}" class="btn btn-dark">Submit Today</a>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">Weekly Overall</p>
-                <h3>{{ weekly_report.overall_percent }}%</h3>
+                <p class="stat-label mb-1">Weekly Overall</p>
+                <h3 class="stat-value">{{ weekly_report.overall_percent }}%</h3>
                 <div class="progress"><div class="progress-bar" style="width: {{ weekly_report.overall_percent }}%"></div></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">5 Waqt Namaz</p>
-                <h3>{{ weekly_report.prayer_percent }}%</h3>
-                <small>{{ weekly_report.completed_prayers }}/{{ weekly_report.expected_prayers }} prayers</small>
+                <p class="stat-label mb-1">5 Waqt Namaz</p>
+                <h3 class="stat-value">{{ weekly_report.prayer_percent }}%</h3>
+                <small class="text-muted fw-semibold">{{ weekly_report.completed_prayers }}/{{ weekly_report.expected_prayers }} prayers</small>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">Dynamic Goals</p>
-                <h3>{{ weekly_report.goal_percent }}%</h3>
-                <small>{{ weekly_report.completed_goal_tasks }}/{{ weekly_report.expected_goal_tasks }} tasks · {{ weekly_report.goal_minutes }} min</small>
+                <p class="stat-label mb-1">Dynamic Goals</p>
+                <h3 class="stat-value">{{ weekly_report.goal_percent }}%</h3>
+                <small class="text-muted fw-semibold">{{ weekly_report.completed_goal_tasks }}/{{ weekly_report.expected_goal_tasks }} tasks · {{ weekly_report.goal_minutes }} min</small>
             </div>
         </div>
     </div>
@@ -41,41 +46,59 @@
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="card shadow-sm">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="mb-3">Today's Status</h5>
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                        <h5 class="card-title-modern mb-1">Today's Status</h5>
+                        <p class="text-muted mb-0 small">Your latest submitted data for today.</p>
+                    </div>
+                    {% if today_entry %}<span class="badge text-bg-success">Submitted</span>{% else %}<span class="badge text-bg-warning">Pending</span>{% endif %}
+                </div>
                 {% if today_entry %}
-                    <p>Overall score: <strong>{{ today_entry.productivity_score }}%</strong></p>
-                    <p>Prayer score: <strong>{{ today_entry.prayer_score }}%</strong></p>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <div class="empty-box text-start p-3">
+                                <small class="text-muted fw-bold">Overall score</small>
+                                <div class="h3 fw-black mb-0">{{ today_entry.productivity_score }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="empty-box text-start p-3">
+                                <small class="text-muted fw-bold">Prayer score</small>
+                                <div class="h3 fw-black mb-0">{{ today_entry.prayer_score }}%</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="table-responsive mb-4">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle mb-0">
                             <thead><tr><th>Prayer</th><th>Status</th><th>Sunnah</th></tr></thead>
                             <tbody>
                             {% for prayer in today_entry.prayers.all %}
                                 <tr>
-                                    <td>{{ prayer.get_prayer_display }}</td>
+                                    <td class="fw-bold">{{ prayer.get_prayer_display }}</td>
                                     <td><span class="badge text-bg-secondary">{{ prayer.get_status_display }}</span></td>
-                                    <td>{% if prayer.sunnah_done %}Yes{% else %}No{% endif %}</td>
+                                    <td>{% if prayer.sunnah_done %}<span class="badge text-bg-success">Yes</span>{% else %}<span class="badge text-bg-light text-dark">No</span>{% endif %}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                     </div>
 
-                    <h6 class="mb-2">Goal Progress</h6>
+                    <h6 class="fw-bold mb-2">Goal Progress</h6>
                     {% if today_entry.goal_progress.all %}
                         <div class="list-group list-group-flush">
                             {% for item in today_entry.goal_progress.all %}
-                                <div class="list-group-item px-0">
-                                    <div class="d-flex justify-content-between">
+                                <div class="list-group-item px-0 py-3">
+                                    <div class="d-flex justify-content-between gap-3">
                                         <div>
                                             <strong>{{ item.goal.title }}</strong>
                                             <div class="small text-muted">{{ item.goal.category.name }}</div>
                                         </div>
                                         <div class="text-end">
                                             {% if item.done %}<span class="badge text-bg-success">Done</span>{% else %}<span class="badge text-bg-light text-dark">Pending</span>{% endif %}
-                                            <div class="small text-muted">{{ item.minutes }} min</div>
+                                            <div class="small text-muted mt-1">{{ item.minutes }} min</div>
                                         </div>
                                     </div>
                                 </div>
@@ -86,7 +109,7 @@
                     {% endif %}
                 {% else %}
                     <div class="empty-box">
-                        <p class="mb-2">You have not submitted today's task yet.</p>
+                        <p class="mb-2 fw-semibold">You have not submitted today's task yet.</p>
                         <a href="{% url 'daily_submit' %}" class="btn btn-sm btn-dark">Submit Now</a>
                     </div>
                 {% endif %}
@@ -95,39 +118,44 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="card shadow-sm mb-4">
+        <div class="card mb-4">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Active Goals</h5>
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                    <div>
+                        <h5 class="card-title-modern mb-1">Active Goals</h5>
+                        <p class="small text-muted mb-0">Goals available for today.</p>
+                    </div>
                     <a href="{% url 'goal_create' %}" class="btn btn-sm btn-outline-dark">Add</a>
                 </div>
                 {% if active_goals %}
                     <div class="list-group list-group-flush">
                         {% for goal in active_goals %}
-                            <a class="list-group-item list-group-item-action" href="{% url 'goal_update' goal.pk %}">
-                                <div class="fw-semibold">{{ goal.title }}</div>
+                            <a class="list-group-item list-group-item-action py-3" href="{% url 'goal_update' goal.pk %}">
+                                <div class="fw-bold">{{ goal.title }}</div>
                                 <small class="text-muted">{{ goal.category.name }} · {{ goal.get_goal_type_display }} · {{ goal.target_minutes_per_day }} min/day</small>
                             </a>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="empty-box">
-                        <p class="mb-2">No active dynamic goals for today.</p>
-                        <a href="{% url 'category_create' %}" class="btn btn-sm btn-outline-dark">Create Category</a>
-                        <a href="{% url 'goal_create' %}" class="btn btn-sm btn-dark">Create Goal</a>
+                        <p class="mb-3">No active dynamic goals for today.</p>
+                        <div class="d-flex gap-2 justify-content-center action-stack">
+                            <a href="{% url 'category_create' %}" class="btn btn-sm btn-outline-dark">Create Category</a>
+                            <a href="{% url 'goal_create' %}" class="btn btn-sm btn-dark">Create Goal</a>
+                        </div>
                     </div>
                 {% endif %}
             </div>
         </div>
 
-        <div class="card shadow-sm">
+        <div class="card">
             <div class="card-body">
-                <h5 class="mb-3">Category Report</h5>
+                <h5 class="card-title-modern">Category Report</h5>
                 {% if weekly_report.category_reports %}
                     {% for row in weekly_report.category_reports %}
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small mb-1">
-                                <span>{{ row.category.name }}</span>
+                                <span class="fw-bold">{{ row.category.name }}</span>
                                 <strong>{{ row.percent }}%</strong>
                             </div>
                             <div class="progress"><div class="progress-bar" style="width: {{ row.percent }}%"></div></div>

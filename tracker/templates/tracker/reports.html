@@ -1,14 +1,15 @@
 {% extends 'tracker/base.html' %}
 {% block title %}Reports{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2 class="mb-1">Reports</h2>
-        <p class="text-muted mb-0">{{ start_date }} to {{ end_date }}</p>
+        <p class="page-eyebrow">Reports</p>
+        <h1 class="page-title">Performance Reports</h1>
+        <p class="page-subtitle">{{ start_date }} to {{ end_date }} · Review prayer, goals, categories, and recent entries.</p>
     </div>
 </div>
 
-<div class="btn-group mb-4 flex-wrap" role="group">
+<div class="period-tabs" role="group">
     <a class="btn btn-outline-dark {% if period == 'daily' %}active{% endif %}" href="?period=daily">Daily</a>
     <a class="btn btn-outline-dark {% if period == 'weekly' %}active{% endif %}" href="?period=weekly">7 Days</a>
     <a class="btn btn-outline-dark {% if period == 'monthly' %}active{% endif %}" href="?period=monthly">1 Month</a>
@@ -18,29 +19,29 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">Overall</p>
-                <h3>{{ report.overall_percent }}%</h3>
+                <p class="stat-label mb-1">Overall</p>
+                <h3 class="stat-value">{{ report.overall_percent }}%</h3>
                 <div class="progress"><div class="progress-bar" style="width: {{ report.overall_percent }}%"></div></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">5 Waqt Namaz</p>
-                <h3>{{ report.prayer_percent }}%</h3>
-                <small>{{ report.completed_prayers }}/{{ report.expected_prayers }} prayers completed</small>
+                <p class="stat-label mb-1">5 Waqt Namaz</p>
+                <h3 class="stat-value">{{ report.prayer_percent }}%</h3>
+                <small class="text-muted fw-semibold">{{ report.completed_prayers }}/{{ report.expected_prayers }} prayers completed</small>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <p class="text-muted mb-1">Dynamic Goals</p>
-                <h3>{{ report.goal_percent }}%</h3>
-                <small>{{ report.completed_goal_tasks }}/{{ report.expected_goal_tasks }} tasks · {{ report.goal_minutes }} min</small>
+                <p class="stat-label mb-1">Dynamic Goals</p>
+                <h3 class="stat-value">{{ report.goal_percent }}%</h3>
+                <small class="text-muted fw-semibold">{{ report.completed_goal_tasks }}/{{ report.expected_goal_tasks }} tasks · {{ report.goal_minutes }} min</small>
             </div>
         </div>
     </div>
@@ -48,27 +49,27 @@
 
 <div class="row g-4">
     <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="mb-3">Prayer Breakdown</h5>
+                <h5 class="card-title-modern">Prayer Breakdown</h5>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between"><span>Jamaat</span><strong>{{ report.jamaat_count }}</strong></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Single</span><strong>{{ report.single_count }}</strong></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Missed</span><strong>{{ report.missed_count }}</strong></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Sunnah Done</span><strong>{{ report.sunnah_count }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between px-0"><span>Jamaat</span><strong>{{ report.jamaat_count }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between px-0"><span>Single</span><strong>{{ report.single_count }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between px-0"><span>Missed</span><strong>{{ report.missed_count }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between px-0"><span>Sunnah Done</span><strong>{{ report.sunnah_count }}</strong></li>
                 </ul>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="mb-3">Dynamic Category Report</h5>
+                <h5 class="card-title-modern">Dynamic Category Report</h5>
                 {% if report.category_reports %}
                     {% for row in report.category_reports %}
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small mb-1">
-                                <span>{{ row.category.name }}</span>
+                                <span class="fw-bold">{{ row.category.name }}</span>
                                 <strong>{{ row.percent }}%</strong>
                             </div>
                             <div class="progress"><div class="progress-bar" style="width: {{ row.percent }}%"></div></div>
@@ -83,17 +84,17 @@
     </div>
 </div>
 
-<div class="card shadow-sm mt-4">
+<div class="card mt-4">
     <div class="card-body">
-        <h5 class="mb-3">Recent Entries</h5>
+        <h5 class="card-title-modern">Recent Entries</h5>
         {% if report.entries %}
             <div class="table-responsive">
-                <table class="table table-sm align-middle">
+                <table class="table table-sm align-middle mb-0">
                     <thead><tr><th>Date</th><th>Overall</th><th>Prayer</th><th>Dynamic Tasks</th><th>Notes</th></tr></thead>
                     <tbody>
                     {% for entry in report.entries %}
                         <tr>
-                            <td>{{ entry.date }}</td>
+                            <td class="fw-bold">{{ entry.date }}</td>
                             <td>{{ entry.productivity_score }}%</td>
                             <td>{{ entry.prayer_score }}%</td>
                             <td>{{ entry.goal_progress.all|length }}</td>
